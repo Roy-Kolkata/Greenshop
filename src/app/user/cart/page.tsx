@@ -6,19 +6,21 @@ import { AnimatePresence, motion } from 'motion/react'
 import { div } from 'motion/react-client'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 function CartPage() {
     const { cartData,subTotal,finalTotal,deliveryFee } = useSelector((state: RootState) => state.cart)
     const dispatch=useDispatch<AppDispatch>()
+    const router=useRouter()
     return (
         <div className='w-[95%] sm:w-[90%] md:w-[80%] mx-auto mt-8 mb-24 relative'>
             {/* <Link href={"/"} className='absolute -top-2 left-0 flex items-center gap-2 text-green-700  hover:text-green-800 font-medium transition-all'>
                 <ArrowLeft size={20} />
                 <span className='hidden sm:inline'>Back to home</span>
             </Link> */}
-            <Link href={"/"} className='absolute -top-2 left-0 flex items-center gap-2 text-green-700 font-semibold bg-white px-4 py-2 rounded-full shadow-md hover:bg-green-100 hover:shadow-lg transition-all'>
+            <Link href={"/"} className='absolute -top-2 left-0 flex items-center gap-2 text-green-700 font-semibold bg-white px-4 py-2 rounded-full shadow-md hover:bg-green-100 hover:shadow-lg transition-all' onClick={()=>router.push("/")}>
                 <ArrowLeft className='w-5 h-5' />
                 <span className='hidden md:flex'>Back to home</span>
             </Link>
@@ -98,7 +100,7 @@ function CartPage() {
                                 </div>
                             </div>
 
-                            <motion.button whileTap={{scale:0.96}} className='w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold text-sm sm:text-base '>
+                            <motion.button whileTap={{scale:0.96}} className='w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold text-sm sm:text-base  'onClick={()=>router.push("/user/checkout")}>
                                 Proceed To Checkout
                             </motion.button>
 
