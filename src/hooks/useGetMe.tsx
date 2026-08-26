@@ -6,7 +6,7 @@ import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 
 function useGetMe() {
-    const dispatch=useDispatch<AppDispatch>()
+    const dispatch = useDispatch<AppDispatch>()
     useEffect(() => {
         const getme = async () => {
             try {
@@ -17,7 +17,7 @@ function useGetMe() {
             }
         }
         getme()
-    })
+    },[dispatch])
 }
 
 export default useGetMe

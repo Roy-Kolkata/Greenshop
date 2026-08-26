@@ -2,8 +2,9 @@
 import { RootState } from '@/redux/store'
 import axios from 'axios'
 import type { LatLngExpression, LeafletEvent } from 'leaflet'
+import { OpenStreetMapProvider } from 'leaflet-geosearch'
 import "leaflet/dist/leaflet.css"
-import { ArrowLeft, Building, Home, MapPin, Navigation, Phone, Search, User } from 'lucide-react'
+import { ArrowLeft, Building, CreditCard, CreditCardIcon, Home, Loader2, LocateFixed, MapPin, Navigation, Phone, Search, Truck, User } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -12,6 +13,7 @@ import { useSelector } from 'react-redux'
 function Checkout() {
     const router = useRouter()
     const { userData } = useSelector((state: RootState) => state.user)
+    const { subTotal,deliveryFee,finalTotal,cartData } = useSelector((state: RootState) => state.cart)
     const [address, setAddress] = useState({
         fullName: "",
         mobile: "",
@@ -20,25 +22,34 @@ function Checkout() {
         pincode: "",
         fullAddress: ""
     })
+    const[paymentMethod,setPaymentMethod]=useState<"cod" | "online">("cod")
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
     const [position, setPosition] = useState<[number, number] | null>(null)
-    const [mapComponents, setMapComponents] = useState<any>(null)
+    const [mapModules, setMapModules] = useState<{
+        MapContainer: any;
+        TileLayer: any;
+        Marker: any;
+        useMap: any;
+        icon: any;
+    } | null>(null)
 
     useEffect(() => {
         Promise.all([
             import('leaflet'),
             import('react-leaflet')
         ]).then(([L, RL]) => {
-            const markerIcon = new L.Icon({
+            const icon = new L.Icon({
                 iconUrl: "https://cdn-icons-png.flaticon.com/128/684/684908.png",
                 iconSize: [40, 40],
                 iconAnchor: [20, 40]
             })
-            setMapComponents({
+            setMapModules({
                 MapContainer: RL.MapContainer,
                 TileLayer: RL.TileLayer,
                 Marker: RL.Marker,
                 useMap: RL.useMap,
-                markerIcon
+                icon
             })
         })
     }, [])
@@ -72,13 +83,34 @@ function Checkout() {
         }
     }, [userData])
 
+    const handleSearchQuery = async () => {
+        setSearchLoading(true)
+        const provider = new OpenStreetMapProvider()
+        const results = await provider.search({ query: searchQuery })
+        if (results) {
+            setSearchLoading(false)
+            setPosition([results[0].y, results[0].x])
+        }
+
+
+    }
+
     useEffect(() => {
         const fetchAddress = async () => {
             if (!position) return
             try {
                 const result = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${position[0]}&lon=${position[1]}&format=json`)
                 console.log(result.data)
-                // setAddress(prev=>({...prev,city:result.data.address.city}))
+                const data = result.data;
+                const addr = data.address;
+
+                setAddress(prev => ({
+                    ...prev,
+                    city: addr.city || addr.town || addr.village || addr.municipality || "",
+                    state: addr.state || "",
+                    pincode: addr.postcode || "",
+                    fullAddress: data.display_name || ""
+                }));
             } catch (error) {
                 console.log(error)
             }
@@ -86,10 +118,97 @@ function Checkout() {
         fetchAddress()
     }, [position])
 
+    const handleCod=async()=>{
+        if(!position)return null
+        try {
+            const result=await axios.post("/api/user/order",{
+                userId:userData?._id,
+                items:cartData.map(item=>(
+                    {
+                        grocery:item._id,
+                        name:item.name,
+                        price:item.price,
+                        unit:item.unit,
+                        quantity:item.quantity,
+                        image:item.image
+                    }
+                )),
+                totalAmount:finalTotal,
+                address:{
+                    fullName:address.fullName,
+                    mobile:address.mobile,
+                    city:address.city,
+                    state:address.state,
+                    fullAddress:address.fullAddress,
+                    pincode:address.pincode,
+                    latitude:position[0],
+                    longitude:position[1]
+                },
+                paymentMethod
+            })
+            router.push("/user/order-success")
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleOnlinePayment=async()=>{
+        if(!position)return null
+        try {
+            const result=await axios.post ("/api/user/payment",{
+                userId:userData?._id,
+                items:cartData.map(item=>(
+                    {
+                        grocery:item._id,
+                        name:item.name,
+                        price:item.price,
+                        unit:item.unit,
+                        quantity:item.quantity,
+                        image:item.image
+                    }
+                )),
+                totalAmount:finalTotal,
+                address:{
+                    fullName:address.fullName,
+                    mobile:address.mobile,
+                    city:address.city,
+                    state:address.state,
+                    fullAddress:address.fullAddress,
+                    pincode:address.pincode,
+                    latitude:position[0],
+                    longitude:position[1]
+                },
+                paymentMethod
+            })
+            window.location.href=result.data.url
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    setPosition([latitude, longitude]);
+                },
+                (err) => {
+                    console.log("location error", err);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000
+                }
+            );
+        }
+    }
+
     const DraggableMarker: React.FC = () => {
-        if (!mapComponents) return null
-        const map = mapComponents.useMap()
-        const Marker = mapComponents.Marker
+        if (!mapModules) return null
+        const map = mapModules.useMap()
+        const Marker = mapModules.Marker
 
         useEffect(() => {
             if (position && map) {
@@ -99,7 +218,7 @@ function Checkout() {
 
         return (
             <Marker
-                icon={mapComponents.markerIcon}
+                icon={mapModules.icon}
                 position={position as LatLngExpression}
                 draggable={true}
                 eventHandlers={{
@@ -112,9 +231,6 @@ function Checkout() {
             />
         )
     }
-
-    const MapContainer = mapComponents?.MapContainer
-    const TileLayer = mapComponents?.TileLayer
 
     return (
         <div className='w-[92%] md:w-[80%] mx-auto py-10 relative'>
@@ -179,22 +295,74 @@ function Checkout() {
                         </div>
 
                         <div className='flex gap-2 mt-3'>
-                            <input type="text" placeholder='Search city or area' className='flex-1 border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none' />
-                            <button className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium '>Search</button>
+                            <input type="text" placeholder='Search city or area' className='flex-1 border rounded-lg p-3 text-sm focus:ring-2 focus:ring-green-500 outline-none' onChange={(e) => setSearchQuery(e.target.value)} />
+                            <button onClick={handleSearchQuery} className='bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium ' >{searchLoading ? <Loader2 size={16} className='animate-spin' /> : "Search"}</button>
                         </div>
 
                         <div className='relative mt-6 h-82.5 rounded-xl overflow-hidden border border-gray-200 shadow-inner'>
-                            {position && MapContainer && TileLayer && (
-                                <MapContainer center={position as LatLngExpression} zoom={13} scrollWheelZoom={true} className='w-full h-full'>
-                                    <TileLayer
+                            {position && mapModules && (
+                                <mapModules.MapContainer center={position as LatLngExpression} zoom={13} scrollWheelZoom={true} className='w-full h-full'>
+                                    <mapModules.TileLayer
                                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
                                     <DraggableMarker />
-                                </MapContainer>
+                                </mapModules.MapContainer>
                             )}
+                            <motion.button
+                                whileTap={{ scale: 0.98 }}
+                                className='absolute bottom-4 right-4 bg-green-600 text-white shadow-lg rounded-full p-3 hover:bg-green-700 transition-all flex items-center justify-center z-999 '
+                                onClick={handleCurrentLocation}
+                            >
+                                <LocateFixed size={22} />
+                            </motion.button>
                         </div>
                     </div>
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className='bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 h-fit '
+                >
+                    <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2'><CreditCard className='text-green-600'/>Payment Method</h2>
+                    <div className='space-y-4 mb-6'>
+                        <button onClick={()=>setPaymentMethod("online")} className={`flex items-center gap-3 w-full border rounded-lg p-3 transoition-all ${paymentMethod==="online"? "border-green-600 bg-green-50 shadow-sm":"hover:bg-gray-50"}`}>
+                            <CreditCardIcon className='text-green-600'/><span className='font-medium text-gray-700'>Pay Online (Stripe)</span>
+                        </button>
+
+
+                         <button onClick={()=>setPaymentMethod("cod")} className={`flex items-center gap-3 w-full border rounded-lg p-3 transoition-all ${paymentMethod==="cod"? "border-green-600 bg-green-50 shadow-sm":"hover:bg-gray-50"}`}>
+                            <Truck className='text-green-600'/><span className='font-medium text-gray-700'>Cash On Delivery</span>
+                        </button>
+                    </div>
+                    <div className='border-t pt-4 text-gray-700 space-y-2 text-sm sm:text-base'>
+                        <div className='flex justify-between'>
+                            <span className='font-semibold'>Subtotal</span>
+                            <span className='font-semibold text-green-600'>₹{subTotal}</span>
+                        </div>
+                        <div className='flex justify-between'>
+                            <span className='font-semibold'>Delivery Fee</span>
+                            <span className='font-semibold text-green-600'>₹{deliveryFee}</span>
+                        </div>
+                        <div className='flex justify-between font-bold text-lg border-t pt-3'>
+                            <span className='font-semibold'>Final Total</span>
+                            <span className='font-semibold text-green-600'>₹{finalTotal}</span>
+                        </div>
+                    </div>
+                    <motion.button
+                    whileTap={{scale:0.96}}
+                    className='w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold'
+                    onClick={()=>{
+                        if(paymentMethod=="cod"){
+                            handleCod()
+                        }else{
+                            handleOnlinePayment()
+                        }
+                    }}
+                    >
+                        {paymentMethod=="cod"?"Place Order":"Pay & Place Order"}
+                    </motion.button>
                 </motion.div>
             </div>
         </div>
