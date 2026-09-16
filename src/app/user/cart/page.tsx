@@ -96,7 +96,7 @@ function CartPage() {
                                 <hr className='my-3'/>
                                  <div className='flex justify-between font-bold  text-lg sm:text-xl'>
                                     <span>Final Total</span>
-                                    <span className='text-green-700 font-semibold'>₹{subTotal}</span>
+                                    <span className='text-green-700 font-semibold'>₹{finalTotal}</span>
                                 </div>
                             </div>
 

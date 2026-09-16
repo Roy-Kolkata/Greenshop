@@ -24,6 +24,8 @@ export interface IOrder {
         latitude: number,
         longitude: number
     }
+    assignment?: mongoose.Types.ObjectId,
+    assignedDeliveryBoy?: mongoose.Types.ObjectId
     status: "pending" | "out of delivery" | "delivered"
     createdAt?: Date
     updateAt?: Date
@@ -54,9 +56,9 @@ const orderSchema = new mongoose.Schema<IOrder>({
         enum: ["cod", "online"],
         default: "cod"
     },
-    isPaid:{
-        type:Boolean,
-        default:false
+    isPaid: {
+        type: Boolean,
+        default: false
     },
     totalAmount: Number,
     address: {
@@ -68,6 +70,15 @@ const orderSchema = new mongoose.Schema<IOrder>({
         fullAddress: String,
         latitude: String,
         longitude: String
+    },
+    assignment: {
+        type: mongoose.Types.ObjectId,
+        ref: "DeliveryAssignment",
+        default:null
+    },
+    assignedDeliveryBoy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
     },
     status: {
         type: String,

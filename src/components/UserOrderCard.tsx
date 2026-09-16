@@ -1,12 +1,14 @@
 "use client"
+import { getSocket } from '@/lib/socket'
 import { IOrder } from '@/models/order.model'
 import { ChevronDown, ChevronUp, CreditCard, MapPin, Package, Truck } from 'lucide-react'
 import { motion } from 'motion/react'
 import Image from 'next/image'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 function UserOrderCard({ order }: { order: IOrder }) {
     const [expanded, setExpanded] = useState(false)
+    const [status,setStatus]=useState(order.status)
     const getStatusColor = (status: string) => {
 
         switch (status) {
@@ -23,6 +25,18 @@ function UserOrderCard({ order }: { order: IOrder }) {
                 return "bg-green-100 text-gray-600 border-gray-300"
         }
     }
+
+    useEffect(():any=>{
+        const socket=getSocket()
+        socket.on("order-status-update",(data)=>{
+            if(data.orderId==order._id){
+                setStatus(data.status)
+            }
+        })
+        return ()=>socket.off("order-status-update")
+    },[])
+
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -41,8 +55,8 @@ function UserOrderCard({ order }: { order: IOrder }) {
                         }`}>
                         {order.isPaid ? "Paid" : "Unpaid"}
                     </span>
-                    <span className={`px-3 py-1 text-xs font-semibold border rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status}
+                    <span className={`px-3 py-1 text-xs font-semibold border rounded-full ${getStatusColor(status)}`}>
+                        {status}
                     </span>
 
                 </div>

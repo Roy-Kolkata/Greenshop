@@ -1,15 +1,10 @@
 "use client"
-import { RootState } from '@/redux/store'
 import { Leaf, ShoppingBasket, Smartphone, Truck } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { button } from 'motion/react-client'
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
 
 function HeroSection() {
-    const {userData}=useSelector((state:RootState)=>state.user)
-    console.log(userData)
     const slides = [
         {
             id: 1,
@@ -58,7 +53,7 @@ function HeroSection() {
         <div className='relative w-[98%] mx-auto mt-32 h-[80vh] rounded-3xl overflow-hidden shadow-2xl'>
             <AnimatePresence mode='wait'>
                 <motion.div
-                key={current}
+                    key={current}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.8 }}
@@ -79,34 +74,33 @@ function HeroSection() {
             </AnimatePresence>
             <div className='absolute inset-0 flex justify-center items-center text-center text-white px-6 '>
                 <motion.div
-                initial={{y:30,opacity:0}}
-                animate={{y:0,opacity:1}}
-                transition={{duration:0.6}}
-                className='flex flex-col items-center justify-center gap-6 max-w-3xl'
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.6 }}
+                    className='flex flex-col items-center justify-center gap-6 max-w-3xl'
                 >
                     <div className='bg-white/10 backdrop-blur-md p-6  rounded-full shadow-l'>{slides[current].icon}</div>
                     <h1 className='text-3xl  sm:text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg'>{slides[current].title}</h1>
                     <p className='text-lg sm:text-xl text-gray-200 max-w-2xl'>{slides[current].subtitle}</p>
-                    <motion.button 
-                    whileHover={{scale:1.29}}
-                    whileTap={{scale:0.96}}
-                    transition={{duration:0.2}}
-                    className='mt-4 bg-white text-green-700 hover:bg-green-100 px-8 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 flex items-center gap-2'>
-                        <ShoppingBasket className='w-5 h-5 '/>
+                    <motion.button
+                        whileHover={{ scale: 1.29 }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ duration: 0.2 }}
+                        className='mt-4 bg-white text-green-700 hover:bg-green-100 px-8 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 flex items-center gap-2'>
+                        <ShoppingBasket className='w-5 h-5 ' />
                         {slides[current].btnText}
                     </motion.button>
 
                 </motion.div>
             </div>
             <div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3'>
-            {slides.map((_,index)=>(
-                <button
-                key={index}
-                className={`w-3 h-3 rounded-full transition-all ${
-                    index===current ? "bg-white w-6" : "bg-white/50"
-                }`}
-                />
-            ))}
+                {slides.map((_, index) => (
+                    <button
+                        key={index}
+                        className={`w-3 h-3 rounded-full transition-all ${index === current ? "bg-white w-6" : "bg-white/50"
+                            }`}
+                    />
+                ))}
             </div>
 
         </div>

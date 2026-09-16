@@ -4,7 +4,7 @@ import { ArrowRight, Bike, Icon, User, UserCog } from 'lucide-react'
 import { motion, scale } from 'motion/react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 function EditRoleMobile() {
   const [roles, setRoles] = useState([
@@ -14,20 +14,35 @@ function EditRoleMobile() {
   ])
   const [selectedRole, setSelectedRole] = useState("")
   const [mobile, setMobile] = useState("")
-  const {update}=useSession()
-  const router=useRouter()
-  const handleEdit=async () => {
+  const { update } = useSession()
+  const router = useRouter()
+  const handleEdit = async () => {
     try {
-      const result=await axios.post("/api/user/edit-role-mobile",{
-        role:selectedRole,
+      const result = await axios.post("/api/user/edit-role-mobile", {
+        role: selectedRole,
         mobile
       })
-      await update({role:selectedRole})
+      await update({ role: selectedRole })
       router.push("/")
     } catch (error) {
       console.log(error)
     }
   }
+
+  useEffect(() => {
+    const checkForAdmin = async () => {
+      try {
+        const result = await axios.get("/api/check-for-admin")
+        console.log(result)
+        if(result.data.adminExist){
+          setRoles(prev=>prev.filter(r=>r.id!=="admin"))
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    checkForAdmin()
+  },[])
   return (
     <div className="flex flex-col items-center min-h-screen p-6 w-full">
       <motion.h1
@@ -76,15 +91,14 @@ function EditRoleMobile() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        disabled={mobile.length!==10 || !selectedRole}
-        className={`inline-flex items-center gap-2 font-semibold py-3 px-8 rounded-2xl shadow-md transition-all duration-200 w-50 mt-20 ${
-          selectedRole && mobile.length===10
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          :"bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
+        disabled={mobile.length !== 10 || !selectedRole}
+        className={`inline-flex items-center gap-2 font-semibold py-3 px-8 rounded-2xl shadow-md transition-all duration-200 w-50 mt-20 ${selectedRole && mobile.length === 10
+            ? "bg-green-600 hover:bg-green-700 text-white"
+            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         onClick={handleEdit}
       >
-        Go to Home<ArrowRight/>
+        Go to Home<ArrowRight />
       </motion.button>
     </div>
   )
