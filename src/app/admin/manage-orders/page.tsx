@@ -1,11 +1,43 @@
 "use client"
 import AdminOrderCard from '@/components/AdminOrderCard'
 import { getSocket } from '@/lib/socket'
-import { IOrder } from '@/models/order.model'
+import { IUser } from '@/models/user.model'
 import axios from 'axios'
 import { ArrowLeft } from 'lucide-react'
+import mongoose from 'mongoose'
 import router, { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
+
+interface IOrder {
+        _id?: mongoose.Types.ObjectId
+        user: mongoose.Types.ObjectId
+        items: {
+            grocery: mongoose.Types.ObjectId,
+            name: string,
+            price: string,
+            unit: string,
+            image: string,
+            quantity: number
+        }[],
+        isPaid: boolean,
+        totalAmount: number,
+        paymentMethod: "cod" | "online",
+        address: {
+            fullName: string,
+            mobile: string,
+            city: string,
+            state: string,
+            pincode: string,
+            fullAddress: string,
+            latitude: number,
+            longitude: number
+        }
+        assignment?: mongoose.Types.ObjectId,
+        assignedDeliveryBoy?: IUser
+        status: "pending" | "out of delivery" | "delivered"
+        createdAt?: Date
+        updateAt?: Date
+    }
 
 function ManageOrders() {
     const [orders, setOrders] = useState<IOrder[]>()
@@ -45,7 +77,7 @@ function ManageOrders() {
             <div className='max-w-6xl  mx-auto  px-4 pt-24 pb-16 space-y-8 '>
                 <div className='space-y-6'>
                     {orders?.map((order, index) => (
-                        <AdminOrderCard key={index}order={order} />
+                        <AdminOrderCard key={index} order={order} />
                     ))}
                 </div>
             </div>

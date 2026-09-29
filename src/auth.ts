@@ -88,5 +88,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 })
 
 //connectdb
-//ecmail check
+//email check
 //password match

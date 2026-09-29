@@ -1,26 +1,62 @@
 "use client"
-import { IOrder } from '@/models/order.model'
+import { IUser } from '@/models/user.model'
 import axios from 'axios'
-import { ChevronDown, ChevronUp, CreditCard, MapPin, Package, Phone, Truck, User } from 'lucide-react'
+import { ChevronDown, ChevronUp, CreditCard, MapPin, Package, Phone, Truck, User, UserCheck } from 'lucide-react'
+import mongoose from 'mongoose'
 import { motion } from 'motion/react'
 import Image from 'next/image'
-import React, { optimisticKey, useState } from 'react'
+import React, { optimisticKey, useEffect, useState } from 'react'
+
+interface IOrder {
+    _id?: mongoose.Types.ObjectId
+    user: mongoose.Types.ObjectId
+    items: {
+        grocery: mongoose.Types.ObjectId,
+        name: string,
+        price: string,
+        unit: string,
+        image: string,
+        quantity: number
+    }[],
+    isPaid: boolean,
+    totalAmount: number,
+    paymentMethod: "cod" | "online",
+    address: {
+        fullName: string,
+        mobile: string,
+        city: string,
+        state: string,
+        pincode: string,
+        fullAddress: string,
+        latitude: number,
+        longitude: number
+    }
+    assignment?: mongoose.Types.ObjectId,
+    assignedDeliveryBoy?: IUser
+    status: "pending" | "out of delivery" | "delivered"
+    createdAt?: Date
+    updateAt?: Date
+}
 
 function AdminOrderCard({ order }: { order: IOrder }) {
 
     const statusOptions = ["pending", "out of delivery"]
     const [expanded, setExpanded] = useState(false)
-    const[status,setStatus]=useState<string>(order.status)
+    const [status, setStatus] = useState<string>("pending")
 
-    const updateStatus=async(orderId:string,status:string)=>{
+    const updateStatus = async (orderId: string, status: string) => {
         try {
-            const result=await axios.post(`/api/admin/update-order-status/${orderId}`,{status})
+            const result = await axios.post(`/api/admin/update-order-status/${orderId}`, { status })
             console.log(result.data)
             setStatus(status)
         } catch (error) {
             console.log(error)
         }
     }
+
+    useEffect(()=>{
+        setStatus(order.status)
+    },[order])
 
     return (
         <motion.div
@@ -63,18 +99,29 @@ function AdminOrderCard({ order }: { order: IOrder }) {
                         <CreditCard size={16} className='text-green-600' />
                         <span>{order.paymentMethod === "cod" ? "Cash On Delivery" : "Online Payment"}</span>
                     </p>
+
+                    {order.assignedDeliveryBoy &&
+                        <div className='mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between'>
+                            <UserCheck className='text-blue-600' size={18}/>
+                            <div className='font-semibold text-gray-800'>
+                                <p className=''>Assigned To:<span>{order.assignedDeliveryBoy.name}</span></p>
+                                <p className='text-xs text-gray-600'>📞+91 {order.assignedDeliveryBoy.mobile}</p>
+                            </div>
+                            <a href={`tel:${order.assignedDeliveryBoy.mobile}`} className='bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg  hover:bg-blue-700 transition'>Call</a>
+                        </div>
+                    }
                 </div>
                 <div className='flex flex-col items-start md:items-end gap-2'>
                     <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${status === "delivered"
-                            ? "bg-green-100 text-green-700"
-                            : status === "pending"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-blue-100 text-blue-700"
+                        ? "bg-green-100 text-green-700"
+                        : status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-blue-100 text-blue-700"
                         }`}>
                         {status}
                     </span>
                     <select className='border border-gray-300 rounded-lg px-4 py-1 text-sm shadow-sm hover:border-green-400 transition  focus:ring-2 focus:ring-green-500 outline-none' value={status}
-                    onChange={(e)=>updateStatus(order._id?.toString()!,e.target.value)}
+                        onChange={(e) => updateStatus(order._id?.toString()!, e.target.value)}
                     >
                         {statusOptions.map(st => (
                             <option value={st} key={st}>{st.toUpperCase()}</option>
@@ -119,16 +166,16 @@ function AdminOrderCard({ order }: { order: IOrder }) {
                     </div>
                 </motion.div>
             </div>
-             <div className='border-t pt-3 mt-3 flex justify-between items-center text-sm font-semibold text-gray-800'>
-                    <div className='flex items-center gap-2 text-gray-700 text-sm'>
-                        <Truck size={16} className='text-green-600' />
-                        <span>Delivery: <span className='text-green-700 font-semibold'>{status}</span></span>
-                    </div>
-                    <div>
-                        Total: <span className='text-green-700 font-bold'>₹{order.totalAmount}</span>
-                    </div>
-
+            <div className='border-t pt-3 mt-3 flex justify-between items-center text-sm font-semibold text-gray-800'>
+                <div className='flex items-center gap-2 text-gray-700 text-sm'>
+                    <Truck size={16} className='text-green-600' />
+                    <span>Delivery: <span className='text-green-700 font-semibold'>{status}</span></span>
                 </div>
+                <div>
+                    Total: <span className='text-green-700 font-bold'>₹{order.totalAmount}</span>
+                </div>
+
+            </div>
         </motion.div>
     )
 }

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req:NextRequest,{params}:{params:{id:string}}) {
     try {
         await connectDb()
-        const {id}= params
+        const {id}= await params
         const session=await auth()
         const deliveryBoyId=session?.user?.id
         if(!deliveryBoyId){
