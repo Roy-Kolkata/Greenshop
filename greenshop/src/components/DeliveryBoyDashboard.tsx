@@ -143,6 +143,10 @@ function DeliveryBoyDashboard() {
             <LiveMap userLocation={userLocation} deliveryBoyLocation={deliveryBoyLocation} />
           </div>
           <DeliveryChat orderId={activeOrder.order._id} deliveryBoyId={userData?._id!} />
+          <div className='mt-6 bg-white rounded-xl  border shadow p-6'>
+            <button className='w-full py-4 bg-green-600 text-white rounded-xl'>Mark as Delivered</button>
+
+          </div>
         </div>
       </div>
     )

@@ -215,7 +215,7 @@ function LiveMap({
   ]
 
   return (
-    <div className="w-full h-125 rounded-xl overflow-hidden shadow relative">
+    <div className="w-full h-125 rounded-xl overflow-hidden shadow relative z-2">
       <MapContainer
         center={center}
         zoom={13}

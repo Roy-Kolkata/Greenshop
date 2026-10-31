@@ -50,7 +50,7 @@ interface ILocation {
   longitude: number
 }
 
-function TrackOrder({ params }: { params: { orderId: string } }) {
+function TrackOrder({ params }: { params: Promise<{ orderId: string }>}) {
 
   const { userData } = useSelector((state: RootState) => state.user)
   const { orderId } = useParams()
